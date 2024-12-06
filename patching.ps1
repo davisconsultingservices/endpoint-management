@@ -13,13 +13,18 @@ if (-not (Get-Module -ListAvailable -Name PSWindowsUpdate)) {
 }
 Import-Module PSWindowsUpdate
 
+# Track if a reboot is required
+$rebootRequired = $false
+
 # Perform Windows Updates
 Write-Output "=== Performing Windows Updates ==="
 try {
-    Get-WindowsUpdate -AcceptAll -Install -AutoReboot
+    Get-WindowsUpdate -AcceptAll -Install
+    if ((Get-WindowsUpdate -KBArticleID "RebootRequired").Count -gt 0) {
+        $rebootRequired = $true
+    }
     Write-Host "Windows Updates completed successfully." -ForegroundColor Green
-}
-catch {
+} catch {
     Write-Host "Error during Windows Updates: $_" -ForegroundColor Red
 }
 
@@ -34,17 +39,22 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
 Write-Output "=== Updating Winget-Managed Packages ==="
 $failedPackages = @()
 $skippedPackages = @()
+$wingetUpdated = $false
 
 try {
-    winget upgrade --all --accept-source-agreements --accept-package-agreements
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "One or more Winget updates may have failed." -ForegroundColor Yellow
+    # Run the Winget update command
+    winget upgrade --all --accept-source-agreements --accept-package-agreements | ForEach-Object {
+        if ($_ -match "Upgrading") {
+            $wingetUpdated = $true
+        }
     }
-    else {
-        Write-Host "All Winget-managed packages updated successfully." -ForegroundColor Green
+    if ($wingetUpdated) {
+        Write-Host "Winget-managed packages updated successfully." -ForegroundColor Green
+        $rebootRequired = $true
+    } else {
+        Write-Host "No Winget-managed packages required updates." -ForegroundColor Yellow
     }
-}
-catch {
+} catch {
     Write-Host "Error during Winget updates: $_" -ForegroundColor Red
     $failedPackages += "Winget packages"
 }
@@ -66,32 +76,26 @@ try {
                 Write-Host "Updating Microsoft Store app: $($app.Name)" -ForegroundColor Cyan
                 Add-AppxPackage -Register "$($app.InstallLocation)\AppxManifest.xml" -DisableDevelopmentMode
                 Write-Host "Updated: $($app.Name)" -ForegroundColor Green
-            }
-            catch {
+            } catch {
                 if ($_ -match "A higher version of this package is already installed") {
                     Write-Host "Skipped: $($app.Name) (higher version already installed)" -ForegroundColor Yellow
                     $skippedPackages += $app.Name
-                }
-                elseif ($_ -match "end of life and can no longer be installed") {
+                } elseif ($_ -match "end of life and can no longer be installed") {
                     Write-Host "Skipped: $($app.Name) (end of life)" -ForegroundColor Yellow
                     $skippedPackages += $app.Name
-                }
-                elseif ($_ -match "apps need to be closed") {
+                } elseif ($_ -match "apps need to be closed") {
                     Write-Host "Skipped: $($app.Name) (resource in use)" -ForegroundColor Yellow
                     $skippedPackages += $app.Name
-                }
-                else {
+                } else {
                     Write-Host "Failed to update: $($app.Name)" -ForegroundColor Red
                     $failedPackages += $app.Name
                 }
             }
         }
-    }
-    else {
+    } else {
         Write-Host "No updates available for Microsoft Store apps." -ForegroundColor Yellow
     }
-}
-catch {
+} catch {
     Write-Host "Error while checking for Microsoft Store updates." -ForegroundColor Red
     $failedPackages += "Microsoft Store apps"
 }
@@ -101,8 +105,7 @@ Write-Output "=== Cleaning Up Deployment Logs ==="
 try {
     Remove-Item -Path "C:\ProgramData\Microsoft\Windows\AppRepository\*.rslc" -Force -ErrorAction SilentlyContinue
     Write-Host "Deployment logs cleaned up successfully." -ForegroundColor Green
-}
-catch {
+} catch {
     Write-Host "Failed to clean up deployment logs: $_" -ForegroundColor Red
 }
 
@@ -116,7 +119,14 @@ if ($skippedPackages.Count -gt 0) {
 if ($failedPackages.Count -gt 0) {
     Write-Host "The following packages failed to update and may need manual intervention:" -ForegroundColor Red
     $failedPackages | ForEach-Object { Write-Host "- $_" }
-}
-else {
+} else {
     Write-Host "All updates completed successfully!" -ForegroundColor Green
+}
+
+# Reboot if required
+if ($rebootRequired) {
+    Write-Output "System requires a reboot. Rebooting now..."
+    Restart-Computer -Force
+} else {
+    Write-Output "No reboot required."
 }
