@@ -4,3 +4,5 @@ try {
 } catch {
     Write-Host "Failed to retrieve public IP address." -ForegroundColor Red
 }
+
+Read-Host "Press Enter to exit"
