@@ -1,7 +1,3 @@
-### **Updated README for `security.ps1`, `patching.ps1`, and `secrets.ps1`**
-
----
-
 # PowerShell Scripts for Security, Patching, and Secrets Reporting
 
 This repository includes PowerShell scripts designed for **security checks**, **patch management**, and **secrets reporting**. Each script provides a focused and modular functionality, offering actionable insights and maintaining system hygiene.
