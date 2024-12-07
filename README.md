@@ -1,63 +1,81 @@
-### **README for `main.ps1`**
+### **Updated README for `security.ps1`, `patching.ps1`, and `secrets.ps1`**
 
 ---
 
-# Script Runner for Patching, Security, and Secrets
+# PowerShell Scripts for Security, Patching, and Secrets Reporting
 
-This repository contains a collection of PowerShell scripts designed for system management tasks such as security checks, patching, and (future) secrets scanning. The primary script, `main.ps1`, orchestrates the execution of the individual scripts in sequence and provides a unified interface.
+This repository includes PowerShell scripts designed for **security checks**, **patch management**, and **secrets reporting**. Each script provides a focused and modular functionality, offering actionable insights and maintaining system hygiene.
 
 ---
 
 ## **Scripts Overview**
 
-### **1. main.ps1**
-The main orchestration script:
-- Executes `security.ps1` (security checks) and `patching.ps1` (system updates) in sequence.
-- Prepares for the future addition of `secrets.ps1` (sensitive data scanning).
-- Outputs results to the console for real-time visibility.
-- Handles errors and ensures scripts are executed in the correct order.
+### **1. `security.ps1`**
+Performs comprehensive system-level security checks:
+- Verifies the firewall status and active rules.
+- Scans for open ports and their associated processes.
+- Audits installed software and versions to check for outdated or vulnerable applications.
+- Analyzes failed login attempts for suspicious activity.
+- Displays the system’s public IP for network validation.
 
-### **2. security.ps1**
-Performs system-level security checks, such as:
-- Firewall status and active rules.
-- Open ports and associated processes.
-- Installed software and versions.
-- Failed login attempts.
-- Public IP address.
+---
 
-### **3. patching.ps1**
-Handles system updates, including:
-- Windows Updates.
-- Application updates via `winget` and the Microsoft Store.
-- Ensures a reboot only occurs if required.
+### **2. `patching.ps1`**
+Handles patch management and updates:
+- Installs Windows updates.
+- Updates third-party applications via `winget` and the Microsoft Store.
+- Detects and schedules system reboots if necessary.
+- Logs all updates for later review and provides a summary of completed tasks.
 
-### **4. secrets.ps1** *(Placeholder for Future)*
-Will perform secrets scanning (e.g., API keys, passwords) using tools like `ripgrep` or similar.
+---
+
+### **3. `secrets.ps1`**
+A **reporting tool** for scanning files and directories for sensitive data:
+- Detects patterns related to:
+  - Personally Identifiable Information (PII) such as Social Security Numbers and emails.
+  - Financial data like IBANs, SWIFT codes, US routing numbers, and account numbers.
+  - Cryptographic secrets, including API keys, JSON Web Tokens (JWTs), private keys, and passwords.
+- Supports a wide variety of file formats, including text files, logs, JSON, CSV, Office documents, and compressed archives.
+- Outputs a detailed, actionable report to the console.
 
 ---
 
 ## **Requirements**
 
-- PowerShell 5.1 or later.
-- Administrator privileges to execute all scripts.
-- Internet access for downloading updates and scanning tools.
+- **PowerShell 5.1 or later**.
+- **Administrator privileges** to run security and patching scripts.
+- **Internet access** for updates and certain checks (e.g., public IP lookups).
 
 ---
 
 ## **Usage**
 
-1. Clone or download the repository:
+### **Run Individual Scripts**
+
+1. **Clone or download the repository**:
    ```bash
    git clone https://github.com/your-repo-name.git
    cd your-repo-name
    ```
 
-2. Open PowerShell as Administrator.
+2. **Open PowerShell as Administrator**.
 
-3. Run the main script:
-   ```powershell
-   .\main.ps1
-   ```
+3. **Execute the desired script**:
+
+   - **Security Checks**:
+     ```powershell
+     .\security.ps1
+     ```
+
+   - **System Updates**:
+     ```powershell
+     .\patching.ps1
+     ```
+
+   - **Secrets Reporting**:
+     ```powershell
+     .\secrets.ps1
+     ```
 
 ---
 
@@ -65,51 +83,59 @@ Will perform secrets scanning (e.g., API keys, passwords) using tools like `ripg
 
 ```plaintext
 .
-├── main.ps1          # Primary script to orchestrate all tasks
-├── security.ps1      # Security checks script
-├── patching.ps1      # System updates and patching script
-└── secrets.ps1       # Placeholder for secrets scanning (future feature)
+├── security.ps1      # Script for security checks
+├── patching.ps1      # Script for patch management
+└── secrets.ps1       # Reporting tool for secrets scanning
 ```
 
 ---
 
-## **Script Execution Flow**
+## **Output Examples**
 
-1. **Security Checks:**
-   - Executes `security.ps1` to check for security-related issues.
-2. **System Updates:**
-   - Runs `patching.ps1` to apply updates and check if a reboot is required.
-3. **Future Secrets Scanning:**
-   - Reserved for the `secrets.ps1` script to scan for sensitive data.
+### Security Checks:
+```plaintext
+=== Security Summary ===
+Firewall Status: Enabled
+Open Ports:
+  - Port 80: ServiceName (PID 1234)
+  - Port 443: ServiceName (PID 5678)
+Failed Login Attempts: 3
+Public IP Address: 203.0.113.25
+```
+
+### Patching:
+```plaintext
+=== Patching Summary ===
+Installed Windows Updates:
+  - KB12345678: Security Update
+  - KB87654321: Feature Update
+Updated Applications:
+  - Google Chrome: Updated to version 123.4.5
+  - Zoom: Updated to version 5.12.3
+Reboot Required: Yes
+```
+
+### Secrets Reporting:
+```plaintext
+=== Secrets Report ===
+Files Scanned: 200
+Findings:
+  - File: C:\Sensitive\info.txt
+    - Pattern: SSN
+    - Matches: 123-45-6789
+  - File: C:\Logs\secrets.log
+    - Pattern: API Key
+    - Matches: AIzaSyD123456789abcdef
+```
 
 ---
 
 ## **Customization**
 
-### **Modify the Script Sequence**
-To change the sequence or add new scripts, update the `$scriptsToRun` array in `main.ps1`:
-```powershell
-$scriptsToRun = @(
-    ".\security.ps1",
-    ".\patching.ps1"
-)
-```
-
----
-
-## **Example Output**
-
-```plaintext
-=== Checking for Administrator Privileges ===
-=== Starting Scripts ===
-=== Running Script: .\security.ps1 ===
-[Output from security.ps1 script]
-=== Completed Script: .\security.ps1 ===
-=== Running Script: .\patching.ps1 ===
-[Output from patching.ps1 script]
-=== Completed Script: .\patching.ps1 ===
-=== All Scripts Completed ===
-```
+### Modify the `secrets.ps1` Scan Configuration
+You can adjust the file extensions and patterns in `secrets.ps1` to suit your specific needs:
+- Add or remove **file types** from the `$ScanFileExtensions` array.
+- Expand **sensitive data patterns** in the `$Patterns` hashtable.
 
 ---
 
@@ -123,6 +149,6 @@ Contributions are welcome! If you have ideas for improvements or additional feat
 
 This project is licensed under the MIT License. See `LICENSE` for details.
 
----
+--- 
 
-Let me know if you'd like further refinements!
+Let me know if you'd like more details or refinements!
