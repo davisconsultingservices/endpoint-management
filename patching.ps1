@@ -100,15 +100,6 @@ try {
     $failedPackages += "Microsoft Store apps"
 }
 
-# Cleanup logs
-Write-Output "=== Cleaning Up Deployment Logs ==="
-try {
-    Remove-Item -Path "C:\ProgramData\Microsoft\Windows\AppRepository\*.rslc" -Force -ErrorAction SilentlyContinue
-    Write-Host "Deployment logs cleaned up successfully." -ForegroundColor Green
-} catch {
-    Write-Host "Failed to clean up deployment logs: $_" -ForegroundColor Red
-}
-
 # Output results
 Write-Output "=== Update Summary ==="
 if ($skippedPackages.Count -gt 0) {
@@ -122,6 +113,11 @@ if ($failedPackages.Count -gt 0) {
 } else {
     Write-Host "All updates completed successfully!" -ForegroundColor Green
 }
+
+# List installed software and versions
+Write-Output "=== Installed Software and Versions ==="
+Get-WmiObject -Class Win32_Product | Select-Object Name, Version | Sort-Object Name | Format-Table
+
 
 # Reboot if required
 if ($rebootRequired) {
